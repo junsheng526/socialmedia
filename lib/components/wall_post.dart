@@ -2,16 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:readmore/readmore.dart';
-import 'package:socialmedia/components/comment.dart';
 import 'package:socialmedia/components/comment_button.dart';
 import 'package:socialmedia/components/like_button.dart';
-import 'package:socialmedia/helper/helper_methods.dart';
+import 'package:socialmedia/pages/comment_page.dart';
 
 class WallPost extends StatefulWidget {
   final String message;
   final String user;
   final String time;
   final String postId;
+  final int commentCount;
   final List<String> likes;
 
   const WallPost(
@@ -19,6 +19,7 @@ class WallPost extends StatefulWidget {
       required this.message,
       required this.user,
       required this.postId,
+      required this.commentCount,
       required this.likes,
       required this.time});
 
@@ -78,15 +79,6 @@ class _WallPostState extends State<WallPost> {
     });
   }
 
-  Future<int> getCommentCount() async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection("User Posts")
-        .doc(widget.postId)
-        .collection("Comments")
-        .get();
-    return querySnapshot.docs.length;
-  }
-
   // show a dialog box for adding comment
   void showCommentDislog() {
     showDialog(
@@ -125,8 +117,19 @@ class _WallPostState extends State<WallPost> {
     );
   }
 
+  void _goToCommentPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CommentPage(postId: widget.postId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    int commentCount = 0;
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary,
@@ -145,15 +148,17 @@ class _WallPostState extends State<WallPost> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(widget.postId),
                   Text(
-                    widget.time,
-                    style: TextStyle(color: Colors.grey[400]),
+                    widget.postId,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  Text(widget.time),
                 ],
               ),
 
-              const SizedBox(height: 5),
+              const SizedBox(height: 15),
               // message
               ReadMoreText(
                 widget.message,
@@ -186,75 +191,55 @@ class _WallPostState extends State<WallPost> {
                 isLiked: isLiked,
                 onTap: toggleLike,
               ),
-              const SizedBox(width: 10),
-              CommentButton(
-                onTap: showCommentDislog,
+              const SizedBox(width: 20),
+              GestureDetector(
+                // Navigate to CommentPage
+                child: CommentButton(
+                  onTap: () => _goToCommentPage(context),
+                ),
               ),
             ],
           ),
 
-          const SizedBox(width: 10),
-
           // Like and Comment count numbers in a row
           Row(
             children: [
+              const SizedBox(width: 5),
               Column(
                 children: [
                   const SizedBox(height: 5),
                   Text(
                     "${widget.likes.length} likes",
-                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
               const SizedBox(width: 10),
-              const Column(
-                children: [
-                  SizedBox(height: 5),
-                  Text(
-                    '0' + ' replies',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection("User Posts")
+                    .doc(widget.postId)
+                    .collection("Comments")
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const SizedBox(); // Return an empty widget if there's no data yet
+                  }
+
+                  // Update commentCount with the new count
+                  commentCount = snapshot.data!.docs.length;
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 5),
+                      Text(
+                        '$commentCount replies',
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
-
-          const SizedBox(height: 20),
-
-          // comments under the post
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection("User Posts")
-                .doc(widget.postId)
-                .collection("Comments")
-                .orderBy("CommentTime", descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              // show loading circle if no data yet
-              if (!snapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              return ListView(
-                shrinkWrap: true, // for nested lists
-                physics: const NeverScrollableScrollPhysics(),
-                children: snapshot.data!.docs.map((doc) {
-                  // get the comment
-                  final commentData = doc.data() as Map<String, dynamic>;
-
-                  // return the comment
-                  return Comment(
-                    text: commentData["CommentText"],
-                    user: commentData["CommentedBy"],
-                    time: formatDateTime(commentData["CommentTime"]),
-                  );
-                }).toList(),
-              );
-            },
-          )
         ],
       ),
     );

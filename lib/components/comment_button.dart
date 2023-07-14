@@ -12,13 +12,9 @@ class CommentButton extends StatelessWidget {
         height: 18,
         child: Image.asset(
           'lib/icons/beacon.png',
-          color: Colors.grey,
+          // color: Colors.grey,
         ),
       ),
-      // child: const Icon(
-      //   Icons.comment_outlined,
-      //   color: Colors.grey,
-      // ),
     );
   }
 }

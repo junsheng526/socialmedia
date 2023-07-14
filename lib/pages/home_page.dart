@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:socialmedia/components/drawer.dart';
+import 'package:socialmedia/components/search_widget.dart';
 import 'package:socialmedia/components/wall_post.dart';
 import 'package:socialmedia/helper/helper_methods.dart';
 import 'package:socialmedia/pages/profile_page.dart';
@@ -86,6 +87,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  late Stream<QuerySnapshot> _postsStream;
+  late List<DocumentSnapshot> _data;
+  List<DocumentSnapshot> _filteredData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _postsStream = FirebaseFirestore.instance
+        .collection("User Posts")
+        .orderBy("TimeStamp", descending: true)
+        .snapshots();
+    _data = [];
+    _filteredData = [];
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection("User Posts")
+          .orderBy("TimeStamp", descending: true)
+          .get();
+
+      setState(() {
+        _data = snapshot.docs;
+        _filteredData = _data;
+      });
+    } catch (error) {
+      //print('Error fetching data: $error');
+    }
+  }
+
+  void searchPosts(String postId) {
+    setState(() {
+      _filteredData = filterPosts(_data, postId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,56 +139,44 @@ class _HomePageState extends State<HomePage> {
         onSignOut: signOut,
         onSettingsTap: goToSettingsPage,
       ),
-      body: Center(
+      body: RefreshIndicator(
+        onRefresh: _fetchData,
         child: Column(
           children: [
-            // the wall
+            SearchWidget(
+              onChanged: searchPosts,
+            ),
             Expanded(
-              child: StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection("User Posts")
-                    .orderBy("TimeStamp", descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        // get the message
-                        final post = snapshot.data!.docs[index];
-                        return WallPost(
-                          message: post['Message'],
-                          user: post['UserEmail'],
-                          postId: post.id,
-                          likes: List<String>.from(post['Likes'] ?? []),
-                          time: formatDateTime(post['TimeStamp']),
-                        );
-                      },
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  }
-                  return const Center(
-                    child: CircularProgressIndicator(),
+              child: ListView.builder(
+                itemCount: _filteredData.length,
+                itemBuilder: (context, index) {
+                  final post =
+                      _filteredData[index].data() as Map<String, dynamic>;
+                  return WallPost(
+                    message: post['Message'],
+                    user: post['UserEmail'],
+                    postId: _filteredData[index].id,
+                    likes: List<String>.from(post['Likes'] ?? []),
+                    commentCount: post['CommentCount'] ?? 0,
+                    time: formatDateTime(post['TimeStamp']),
                   );
                 },
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            // logged in as
-            Text(
-              "Logged in as: ${currentUser.email!}",
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),
     );
+  }
+}
+
+List<DocumentSnapshot> filterPosts(List<DocumentSnapshot> data, String postId) {
+  if (postId.isEmpty) {
+    return data;
+  } else {
+    return data
+        .where((snapshot) =>
+            snapshot.id.toLowerCase().contains(postId.toLowerCase()))
+        .toList();
   }
 }
