@@ -94,6 +94,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _isSearching = false;
     _postsStream = FirebaseFirestore.instance
         .collection("User Posts")
         .orderBy("TimeStamp", descending: true)
@@ -121,9 +122,13 @@ class _HomePageState extends State<HomePage> {
 
   void searchPosts(String postId) {
     setState(() {
-      _filteredData = filterPosts(_data, postId);
+      _filteredData = filterPosts(_data, _searchQuery);
     });
   }
+
+  String _searchQuery = '';
+  bool _isSearching = false;
+  IconData _searchIcon = Icons.search;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +136,38 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text("TARUMT Confession"),
+        title: _isSearching
+            ? TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                  searchPosts(value);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search by ID',
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  border: InputBorder.none,
+                ),
+              )
+            : const Text("TARUMT Confession"),
+        actions: [
+          IconButton(
+            icon: Icon(_searchIcon),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (_isSearching) {
+                  _searchIcon = Icons.close;
+                } else {
+                  _searchIcon = Icons.search;
+                  _searchQuery = '';
+                  searchPosts('');
+                }
+              });
+            },
+          ),
+        ],
       ),
       drawer: MyDrawer(
         onProfileTap: goToProfilePage,
@@ -141,29 +177,19 @@ class _HomePageState extends State<HomePage> {
       ),
       body: RefreshIndicator(
         onRefresh: _fetchData,
-        child: Column(
-          children: [
-            SearchWidget(
-              onChanged: searchPosts,
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _filteredData.length,
-                itemBuilder: (context, index) {
-                  final post =
-                      _filteredData[index].data() as Map<String, dynamic>;
-                  return WallPost(
-                    message: post['Message'],
-                    user: post['UserEmail'],
-                    postId: _filteredData[index].id,
-                    likes: List<String>.from(post['Likes'] ?? []),
-                    commentCount: post['CommentCount'] ?? 0,
-                    time: formatDateTime(post['TimeStamp']),
-                  );
-                },
-              ),
-            ),
-          ],
+        child: ListView.builder(
+          itemCount: _filteredData.length,
+          itemBuilder: (context, index) {
+            final post = _filteredData[index].data() as Map<String, dynamic>;
+            return WallPost(
+              message: post['Message'],
+              user: post['UserEmail'],
+              postId: _filteredData[index].id,
+              likes: List<String>.from(post['Likes'] ?? []),
+              commentCount: post['CommentCount'] ?? 0,
+              time: formatDateTime(post['TimeStamp']),
+            );
+          },
         ),
       ),
     );
