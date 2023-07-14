@@ -2,22 +2,19 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-String formatDate(Timestamp timestamp) {
-  // timestamp is the object we retrieve from firebase
-  // so to display it, lets convert it to a String
+import 'package:intl/intl.dart';
+
+String formatDateTime(Timestamp timestamp) {
   DateTime dateTime = timestamp.toDate();
 
-  // get year
-  String year = dateTime.year.toString();
+  // Format the date
+  String formattedDate = DateFormat('dd MMMM yyyy').format(dateTime);
 
-  // get month
-  String month = dateTime.month.toString();
+  // Format the time
+  String formattedTime = DateFormat('hh:mm a').format(dateTime);
 
-  // get day
-  String day = dateTime.day.toString();
+  // Combine the formatted date and time
+  String formattedDateTime = '$formattedDate $formattedTime';
 
-  // fnial formatted date
-  String formattedData = '$day/$month/$year';
-
-  return formattedData;
+  return formattedDateTime;
 }

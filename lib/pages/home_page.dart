@@ -2,10 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:socialmedia/components/drawer.dart';
-import 'package:socialmedia/components/text_field.dart';
 import 'package:socialmedia/components/wall_post.dart';
 import 'package:socialmedia/helper/helper_methods.dart';
 import 'package:socialmedia/pages/profile_page.dart';
+import 'package:socialmedia/pages/settings_page.dart';
+import 'package:socialmedia/pages/writing_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -57,17 +58,47 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // navigate to writing page
+  void goToWritingPage() {
+    //pop menu drawer
+    Navigator.pop(context);
+
+    // go to profile page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WritingPage(),
+      ),
+    );
+  }
+
+  // navigate to settings page
+  void goToSettingsPage() {
+    //pop menu drawer
+    Navigator.pop(context);
+
+    // go to profile page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SettingsPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text("The Wall"),
+        title: const Text("TARUMT Confession"),
       ),
       drawer: MyDrawer(
         onProfileTap: goToProfilePage,
+        onWritingTap: goToWritingPage,
         onSignOut: signOut,
+        onSettingsTap: goToSettingsPage,
       ),
       body: Center(
         child: Column(
@@ -77,10 +108,7 @@ class _HomePageState extends State<HomePage> {
               child: StreamBuilder(
                 stream: FirebaseFirestore.instance
                     .collection("User Posts")
-                    .orderBy(
-                      "TimeStamp",
-                      descending: false,
-                    )
+                    .orderBy("TimeStamp", descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
@@ -94,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                           user: post['UserEmail'],
                           postId: post.id,
                           likes: List<String>.from(post['Likes'] ?? []),
-                          time: formatDate(post['TimeStamp']),
+                          time: formatDateTime(post['TimeStamp']),
                         );
                       },
                     );
@@ -110,27 +138,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // post message
-            Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Row(
-                children: [
-                  // text field
-                  Expanded(
-                    child: MyTextField(
-                      controller: textController,
-                      hintText: 'Write something on the wall..',
-                      obscureText: false,
-                    ),
-                  ),
-
-                  // post button
-                  IconButton(
-                      onPressed: postMessage,
-                      icon: const Icon(Icons.arrow_circle_up))
-                ],
-              ),
-            ),
+            const SizedBox(height: 10),
 
             // logged in as
             Text(
@@ -138,9 +146,7 @@ class _HomePageState extends State<HomePage> {
               style: const TextStyle(color: Colors.grey),
             ),
 
-            const SizedBox(
-              height: 50,
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

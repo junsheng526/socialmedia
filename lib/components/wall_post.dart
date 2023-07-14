@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:readmore/readmore.dart';
 import 'package:socialmedia/components/comment.dart';
 import 'package:socialmedia/components/comment_button.dart';
 import 'package:socialmedia/components/like_button.dart';
@@ -11,7 +12,6 @@ class WallPost extends StatefulWidget {
   final String user;
   final String time;
   final String postId;
-
   final List<String> likes;
 
   const WallPost(
@@ -73,9 +73,18 @@ class _WallPostState extends State<WallPost> {
         .collection("Comments")
         .add({
       "CommentText": commentText,
-      "CommentedBy": currentUser.email,
+      "CommentedBy": currentUser.email!.split('@')[0],
       "CommentTime": Timestamp.now() //remember to format this when displaying
     });
+  }
+
+  Future<int> getCommentCount() async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection("User Posts")
+        .doc(widget.postId)
+        .collection("Comments")
+        .get();
+    return querySnapshot.docs.length;
   }
 
   // show a dialog box for adding comment
@@ -132,68 +141,78 @@ class _WallPostState extends State<WallPost> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // message
-              Text(widget.message),
-
-              const SizedBox(height: 5),
-
-              // user
-
+              // id
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.user,
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                  Text(
-                    " | ",
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
+                  Text(widget.postId),
                   Text(
                     widget.time,
                     style: TextStyle(color: Colors.grey[400]),
                   ),
                 ],
               ),
+
+              const SizedBox(height: 5),
+              // message
+              ReadMoreText(
+                widget.message,
+                trimLines: 3,
+                textAlign: TextAlign.justify,
+                trimMode: TrimMode.Line,
+                trimCollapsedText: " Show More ",
+                trimExpandedText: " Show Less ",
+                moreStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+                lessStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+
+              const SizedBox(height: 5),
             ],
           ),
 
           const SizedBox(height: 20),
 
           // button
+          // Like and Comment buttons in a row
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // like
+              LikeButton(
+                isLiked: isLiked,
+                onTap: toggleLike,
+              ),
+              const SizedBox(width: 10),
+              CommentButton(
+                onTap: showCommentDislog,
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 10),
+
+          // Like and Comment count numbers in a row
+          Row(
+            children: [
               Column(
                 children: [
-                  // like button
-                  LikeButton(
-                    isLiked: isLiked,
-                    onTap: toggleLike,
-                  ),
-
                   const SizedBox(height: 5),
-                  // like count
                   Text(
-                    widget.likes.length.toString(),
+                    "${widget.likes.length} likes",
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
               const SizedBox(width: 10),
-              // comment
-              Column(
+              const Column(
                 children: [
-                  // comment button
-                  CommentButton(
-                    onTap: showCommentDislog,
-                  ),
-
-                  const SizedBox(height: 5),
-                  // comment count
-                  const Text(
-                    '0',
+                  SizedBox(height: 5),
+                  Text(
+                    '0' + ' replies',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -230,7 +249,7 @@ class _WallPostState extends State<WallPost> {
                   return Comment(
                     text: commentData["CommentText"],
                     user: commentData["CommentedBy"],
-                    time: formatDate(commentData["CommentTime"]),
+                    time: formatDateTime(commentData["CommentTime"]),
                   );
                 }).toList(),
               );

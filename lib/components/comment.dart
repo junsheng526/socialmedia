@@ -23,27 +23,29 @@ class Comment extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // comment
-          Text(text),
-
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: user,
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(
+                  text: '  $text',
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 5),
-
-          // user, time
-          Row(
-            children: [
-              Text(
-                user,
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-              Text(
-                " | ",
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-              Text(
-                time,
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-            ],
+          Text(
+            time,
+            style: TextStyle(color: Colors.grey[400]),
           ),
         ],
       ),

@@ -3,9 +3,15 @@ import 'package:socialmedia/components/my_list_tile.dart';
 
 class MyDrawer extends StatelessWidget {
   final void Function()? onProfileTap;
+  final void Function()? onWritingTap;
   final void Function()? onSignOut;
+  final void Function()? onSettingsTap;
   const MyDrawer(
-      {super.key, required this.onProfileTap, required this.onSignOut});
+      {super.key,
+      required this.onProfileTap,
+      required this.onWritingTap,
+      required this.onSignOut,
+      required this.onSettingsTap});
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +36,22 @@ class MyDrawer extends StatelessWidget {
                 text: 'H O M E',
                 onTap: () => Navigator.pop(context),
               ),
+              // writing title
+              MyListTile(
+                icon: Icons.edit_note,
+                text: 'W R I T I N G',
+                onTap: onWritingTap,
+              ),
               // profile list title
               MyListTile(
                 icon: Icons.person,
                 text: 'P R O F I L E',
                 onTap: onProfileTap,
+              ),
+              MyListTile(
+                icon: Icons.settings,
+                text: 'S E T T I N G S',
+                onTap: onSettingsTap,
               ),
             ],
           ),
