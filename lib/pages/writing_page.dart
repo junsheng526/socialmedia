@@ -63,7 +63,7 @@ class _WritingPageState extends State<WritingPage> {
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text("Settings Page"),
+        title: const Text("Writing Page"),
       ),
       body: Center(
         child: Column(

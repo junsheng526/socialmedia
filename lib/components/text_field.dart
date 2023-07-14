@@ -17,6 +17,7 @@ class MyTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      maxLines: null,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide:
