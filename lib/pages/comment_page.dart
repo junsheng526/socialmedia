@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:socialmedia/components/comment.dart';
 import 'package:socialmedia/helper/helper_methods.dart';
@@ -15,6 +16,7 @@ class CommentPage extends StatefulWidget {
 class _CommentPageState extends State<CommentPage> {
   late Stream<QuerySnapshot> _commentsStream;
   late List<DocumentSnapshot> _comments;
+  final _commentTextController = TextEditingController();
 
   @override
   void initState() {
@@ -45,49 +47,96 @@ class _CommentPageState extends State<CommentPage> {
     }
   }
 
+  void postComment() {
+    final commentText = _commentTextController.text.trim();
+    if (commentText.isNotEmpty) {
+      FirebaseFirestore.instance
+          .collection("User Posts")
+          .doc(widget.postId)
+          .collection("Comments")
+          .add({
+        "CommentText": commentText,
+        "CommentedBy": FirebaseAuth.instance.currentUser!.email!.split('@')[0],
+        "CommentTime": Timestamp.now(),
+      }).then((_) {
+        setState(() {
+          _commentTextController.clear();
+        });
+      }).catchError((error) {
+        // Handle error
+        print('Error posting comment: $error');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Comments'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchComments,
-        child: StreamBuilder<QuerySnapshot>(
-          stream: _commentsStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('Error: ${snapshot.error}'),
-              );
-            } else {
-              _comments = snapshot.data!.docs;
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _fetchComments,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _commentsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  } else {
+                    _comments = snapshot.data!.docs;
 
-              if (_comments.isEmpty) {
-                return const Center(
-                  child: Text('No comments yet'),
-                );
-              }
+                    if (_comments.isEmpty) {
+                      return const Center(
+                        child: Text('No comments yet'),
+                      );
+                    }
 
-              return ListView.builder(
-                itemCount: _comments.length,
-                itemBuilder: (context, index) {
-                  final commentData =
-                      _comments[index].data() as Map<String, dynamic>;
-                  return Comment(
-                    text: commentData["CommentText"],
-                    user: commentData["CommentedBy"],
-                    time: formatDateTime(commentData["CommentTime"]),
-                  );
+                    return ListView.builder(
+                      itemCount: _comments.length,
+                      itemBuilder: (context, index) {
+                        final commentData =
+                            _comments[index].data() as Map<String, dynamic>;
+                        return Comment(
+                          text: commentData["CommentText"],
+                          user: commentData["CommentedBy"],
+                          time: formatDateTime(commentData["CommentTime"]),
+                        );
+                      },
+                    );
+                  }
                 },
-              );
-            }
-          },
-        ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentTextController,
+                    decoration: const InputDecoration(
+                      hintText: 'Write a comment...',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: postComment,
+                  icon: Icon(Icons.send),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

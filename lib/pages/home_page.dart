@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:socialmedia/components/drawer.dart';
-import 'package:socialmedia/components/search_widget.dart';
 import 'package:socialmedia/components/wall_post.dart';
 import 'package:socialmedia/helper/helper_methods.dart';
 import 'package:socialmedia/pages/profile_page.dart';
