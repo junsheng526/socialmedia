@@ -126,9 +126,12 @@ class _WallPostState extends State<WallPost> {
     );
   }
 
+  int likeCount = 0;
+
   @override
   Widget build(BuildContext context) {
     int commentCount = 0;
+    // like count
 
     return Container(
       decoration: BoxDecoration(
@@ -208,8 +211,26 @@ class _WallPostState extends State<WallPost> {
               Column(
                 children: [
                   const SizedBox(height: 5),
-                  Text(
-                    "${widget.likes.length} likes",
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("User Posts")
+                        .doc(widget.postId)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const SizedBox(); // Return an empty widget if there's no data yet
+                      }
+
+                      // Calculate the like count
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>?;
+                      final likes = data?['Likes'] as List<dynamic>? ?? [];
+                      final likeCount = likes.length;
+
+                      return Text(
+                        '$likeCount likes',
+                      );
+                    },
                   ),
                 ],
               ),

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-class MyTextField extends StatelessWidget {
+class WritingField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
-
-  const MyTextField({
+  const WritingField({
     super.key,
     required this.controller,
     required this.hintText,
@@ -17,7 +16,7 @@ class MyTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
-      // maxLines: null,
+      maxLines: null,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide:

@@ -15,7 +15,7 @@ class Comment extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
+        color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(4),
       ),
       margin: const EdgeInsets.only(bottom: 5),
@@ -23,29 +23,27 @@ class Comment extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: user,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.bold,
-                  ),
+          Row(
+            children: [
+              Text(
+                user,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
                 ),
-                TextSpan(
-                  text: '  $text',
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                time,
+                style: TextStyle(color: Colors.grey[400]),
+              ),
+            ],
           ),
           const SizedBox(height: 5),
           Text(
-            time,
-            style: TextStyle(color: Colors.grey[400]),
+            text,
+            style: const TextStyle(
+              color: Colors.black,
+            ),
           ),
         ],
       ),

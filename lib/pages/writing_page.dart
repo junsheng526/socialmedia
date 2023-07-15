@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:socialmedia/components/text_field.dart';
+import 'package:socialmedia/components/writing_field.dart';
 
 class WritingPage extends StatefulWidget {
   const WritingPage({super.key});
@@ -75,7 +75,7 @@ class _WritingPageState extends State<WritingPage> {
                 children: [
                   // text field
                   Expanded(
-                    child: MyTextField(
+                    child: WritingField(
                       controller: textController,
                       hintText: 'Write something on the wall..',
                       obscureText: false,
@@ -84,8 +84,7 @@ class _WritingPageState extends State<WritingPage> {
 
                   // post button
                   IconButton(
-                      onPressed: postMessage,
-                      icon: const Icon(Icons.arrow_circle_up))
+                      onPressed: postMessage, icon: const Icon(Icons.send))
                 ],
               ),
             ),

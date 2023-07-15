@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:socialmedia/components/comment.dart';
+import 'package:socialmedia/components/writing_field.dart';
 import 'package:socialmedia/helper/helper_methods.dart';
 
 class CommentPage extends StatefulWidget {
@@ -50,21 +51,35 @@ class _CommentPageState extends State<CommentPage> {
   void postComment() {
     final commentText = _commentTextController.text.trim();
     if (commentText.isNotEmpty) {
-      FirebaseFirestore.instance
-          .collection("User Posts")
-          .doc(widget.postId)
-          .collection("Comments")
-          .add({
-        "CommentText": commentText,
-        "CommentedBy": FirebaseAuth.instance.currentUser!.email!.split('@')[0],
-        "CommentTime": Timestamp.now(),
-      }).then((_) {
-        setState(() {
-          _commentTextController.clear();
-        });
+      final currentUser = FirebaseAuth.instance.currentUser!;
+      final userEmail = currentUser.email!;
+      final usersCollection =
+          FirebaseFirestore.instance.collection("Users").doc(userEmail);
+
+      usersCollection.get().then((userDoc) {
+        if (userDoc.exists) {
+          final username = userDoc.data()?['username'];
+
+          FirebaseFirestore.instance
+              .collection("User Posts")
+              .doc(widget.postId)
+              .collection("Comments")
+              .add({
+            "CommentText": commentText,
+            "CommentedBy": username,
+            "CommentTime": Timestamp.now(),
+          }).then((_) {
+            setState(() {
+              _commentTextController.clear();
+            });
+          }).catchError((error) {
+            // Handle error
+            //print('Error posting comment: $error');
+          });
+        }
       }).catchError((error) {
         // Handle error
-        print('Error posting comment: $error');
+        //print('Error retrieving user: $error');
       });
     }
   }
@@ -72,7 +87,9 @@ class _CommentPageState extends State<CommentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Comments'),
       ),
       body: Column(
@@ -108,7 +125,7 @@ class _CommentPageState extends State<CommentPage> {
                         return Comment(
                           text: commentData["CommentText"],
                           user: commentData["CommentedBy"],
-                          time: formatDateTime(commentData["CommentTime"]),
+                          time: returnAgos(commentData["CommentTime"]),
                         );
                       },
                     );
@@ -122,16 +139,15 @@ class _CommentPageState extends State<CommentPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: WritingField(
                     controller: _commentTextController,
-                    decoration: const InputDecoration(
-                      hintText: 'Write a comment...',
-                    ),
+                    hintText: 'Write a comment..',
+                    obscureText: false,
                   ),
                 ),
                 IconButton(
                   onPressed: postComment,
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                 ),
               ],
             ),
